@@ -1,61 +1,57 @@
 package com.crowdfunding.controller;
 
-import com.crowdfunding.dto.ApiResponse;
-import com.crowdfunding.dto.ProjectDTO;
+import com.crowdfunding.model.*;
 import com.crowdfunding.service.ProjectService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import javax.validation.Valid;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/projects")
 public class ProjectController {
-
-    @Autowired
-    private ProjectService projectService;
+    private final ProjectService service;
+    public ProjectController(ProjectService service) { this.service = service; }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<ProjectDTO>> createProject(@Valid @RequestBody ProjectDTO projectDTO) {
-        ProjectDTO createdProject = projectService.createProject(projectDTO);
-        return new ResponseEntity<>(ApiResponse.success("Project created", createdProject), HttpStatus.CREATED);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<ProjectDTO>> getProjectById(@PathVariable int id) {
-        ProjectDTO project = projectService.getProjectById(id);
-        return ResponseEntity.ok(ApiResponse.success(project));
+    public Project create(@RequestBody Map<String, Object> body) {
+        return service.createProject(
+                (String) body.get("title"),
+                (String) body.get("description"),
+                new BigDecimal(body.get("goalAmount").toString()),
+                (Integer) body.get("creatorId"),
+                (Integer) body.get("categoryId")
+        );
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ProjectDTO>>> getAllProjects() {
-        List<ProjectDTO> projects = projectService.getAllProjects();
-        return ResponseEntity.ok(ApiResponse.success(projects));
+    public List<Project> getAll() { return service.getAllProjects(); }
+
+    @GetMapping("/{id}")
+    public Project get(@PathVariable Integer id) { return service.getProject(id); }
+
+    @PostMapping("/{id}/rewards")
+    public Reward addReward(@PathVariable Integer id, @RequestBody Reward r) {
+        return service.addReward(id, r);
     }
 
-    @GetMapping("/creator/{creatorId}")
-    public ResponseEntity<ApiResponse<List<ProjectDTO>>> getProjectsByCreator(@PathVariable int creatorId) {
-        List<ProjectDTO> projects = projectService.getProjectsByCreator(creatorId);
-        return ResponseEntity.ok(ApiResponse.success(projects));
+    @PostMapping("/{id}/pledge")
+    public Pledge pledge(@PathVariable Integer id, @RequestBody Map<String, Object> body) {
+        return service.backProject(
+                id,
+                (Integer) body.get("backerId"),
+                (Integer) body.get("rewardId"),
+                new BigDecimal(body.get("amount").toString())
+        );
     }
 
-    @GetMapping("/status/{status}")
-    public ResponseEntity<ApiResponse<List<ProjectDTO>>> getProjectsByStatus(@PathVariable String status) {
-        List<ProjectDTO> projects = projectService.getProjectsByStatus(status);
-        return ResponseEntity.ok(ApiResponse.success(projects));
+    @PostMapping("/{id}/updates")
+    public ProjectUpdate addUpdate(@PathVariable Integer id, @RequestBody Map<String, String> body) {
+        return service.addUpdate(id, body.get("content"));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<ProjectDTO>> updateProject(@PathVariable int id, @Valid @RequestBody ProjectDTO projectDTO) {
-        ProjectDTO updatedProject = projectService.updateProject(id, projectDTO);
-        return ResponseEntity.ok(ApiResponse.success("Project updated", updatedProject));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteProject(@PathVariable int id) {
-        projectService.deleteProject(id);
-        return ResponseEntity.ok(ApiResponse.success("Project deleted", null));
+    @PostMapping("/{id}/comments")
+    public Comment addComment(@PathVariable Integer id, @RequestBody Map<String, Object> body) {
+        return service.addComment(id, (Integer) body.get("userId"), (String) body.get("text"));
     }
 }

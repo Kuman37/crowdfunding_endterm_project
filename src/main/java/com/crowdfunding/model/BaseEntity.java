@@ -1,18 +1,14 @@
 package com.crowdfunding.model;
 
-public abstract class BaseEntity {
-    private int id;
-    private String name;
+import jakarta.persistence.*;
+import java.io.Serializable;
 
-    public BaseEntity(int id, String name) {
-        this.id = id;
-        this.name = name;
-    }
+@MappedSuperclass
+public abstract class BaseEntity implements Serializable {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
-    public int getId() { return id; }
-    public String getName() { return name; }
-    public abstract String getSummary();
-
-    public void setId(int id) { this.id = id; }
-    public void setName(String name) { this.name = name; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 }
